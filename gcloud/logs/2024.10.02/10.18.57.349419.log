@@ -1,0 +1,22 @@
+2024-10-02 10:18:57,364 DEBUG    root            Loaded Command Group: ['gcloud', 'compute']
+2024-10-02 10:18:57,387 DEBUG    root            Loaded Command Group: ['gcloud', 'compute', 'ssh']
+2024-10-02 10:18:57,388 DEBUG    root            Running [gcloud.compute.ssh] with arguments: [--project: "c3labs", --zone: "europe-north1-b", [USER@]INSTANCE: "instance-20241001-232901"]
+2024-10-02 10:18:57,501 DEBUG    urllib3.connectionpool Starting new HTTPS connection (1): compute.googleapis.com:443
+2024-10-02 10:18:57,804 DEBUG    urllib3.connectionpool https://compute.googleapis.com:443 "GET /compute/v1/projects/c3labs/zones/europe-north1-b/instances/instance-20241001-232901?alt=json HTTP/1.1" 200 None
+2024-10-02 10:18:57,808 DEBUG    urllib3.connectionpool Starting new HTTPS connection (1): compute.googleapis.com:443
+2024-10-02 10:18:58,243 DEBUG    urllib3.connectionpool https://compute.googleapis.com:443 "GET /compute/v1/projects/c3labs?alt=json HTTP/1.1" 200 None
+2024-10-02 10:18:58,249 DEBUG    root            OS Login Enabled: False
+2FA Enabled: False
+Security Keys Enabled: False
+Username: MiguelTavares
+Third Party User: False
+SSH Security Key Support: None
+Environment: None
+Security Keys:
+
+Signed SSH Key: False
+Require Certificates: False
+
+2024-10-02 10:18:58,250 DEBUG    root            Current SSH keys in project: ['MiguelTavares:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCsGRoFrRnoCeBQAasCV67GsQD4C7vjxRTn0HhOajO8c2HqXJ/Ie+tO9y+XHpwvp2uVX17IsqLrfocJv0aCioUGpZWDh+FoGEm2SHMV0obU4atuWAFBGTtc/JyH++P0p5436E9eebu6RN8xeUQrZ65IEi5Arlh/taioLBdMH+0HJ71qvkjaDqbFE3RSDyDHttYFhC8I+/a9WmaRvQq1SeEjn13fawWB0/QisE7i3aD38FaUz8gTO8FqGVag27ZJRkzzxUsuwwoVcpZ1K5Gu2EaNw6PiTNHvodF7aGVxzfVW6DJDZm68g2W1L4A55J4UjlDhznWVkOZECLgamniK1Ob14WWS3GddTPw3W3OhXt9ntHxDjxr//ZfBB6QDECUk0c4FKaj2ehftY/TS++w/fJCsRtI5MZb+znIYZL8uLEiHmt9Dq17rwYtrkCVR4dVNLfSVlROI/4hWg0JH+O/1mXhs+4CjWOvmnPexi1QPoFkCHM/RNME8hvBHaLmy+dimQS8= MiguelTavares@MiguelTokM1Pro2']
+2024-10-02 10:18:58,250 DEBUG    root            Running command [/usr/bin/ssh -t -i /Users/MiguelTavares/.ssh/google_compute_engine -o CheckHostIP=no -o HashKnownHosts=no -o HostKeyAlias=compute.1849898479687645437 -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/Users/MiguelTavares/.ssh/google_compute_known_hosts MiguelTavares@34.88.73.21].
+2024-10-02 10:18:58,250 DEBUG    root            Executing command: ['/usr/bin/ssh', '-t', '-i', '/Users/MiguelTavares/.ssh/google_compute_engine', '-o', 'CheckHostIP=no', '-o', 'HashKnownHosts=no', '-o', 'HostKeyAlias=compute.1849898479687645437', '-o', 'IdentitiesOnly=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'UserKnownHostsFile=/Users/MiguelTavares/.ssh/google_compute_known_hosts', 'MiguelTavares@34.88.73.21']

@@ -1,0 +1,8 @@
+[core]
+account = migtavares6@gmail.com
+project = c3labs
+
+[compute]
+zone = europe-north1-a
+region = europe-north1
+
