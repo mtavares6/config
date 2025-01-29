@@ -1,0 +1,3 @@
+# Config
+
+My terminal configuration.
