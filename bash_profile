@@ -51,3 +51,7 @@ export PATH="$HOME/.jbang/bin:$PATH"
 [[ -r "/opt/homebrew/etc/profile.d/bash_completion.sh" ]] && . "/opt/homebrew/etc/profile.d/bash_completion.sh"
 [[ -r "/etc/profile.d/bash_completion.sh" ]] && . "/etc/profile.d/bash_completion.sh"
 
+
+[ -s "/Users/MiguelTavares/.jabba/jabba.sh" ] && source "/Users/MiguelTavares/.jabba/jabba.sh"
+export JABBA_VERSION=0.11.2
+[ -s "$JABBA_HOME/jabba.sh" ] && source "$JABBA_HOME/jabba.sh"

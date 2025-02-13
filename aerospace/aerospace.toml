@@ -206,3 +206,4 @@ alt-shift-l = ['join-with right', 'mode main']
 down = 'volume down'
 up = 'volume up'
 shift-down = ['volume set 0', 'mode main']
+#shift-down = ['volume set 0', 'mode main']

@@ -3,6 +3,13 @@ local workspace_path = home .. '/.local/share/nvim/jdtls-workspace/'
 local project_name = vim.fn.fnamemodify(vim.fn.getcwd(), ':p:h:t')
 local workspace_dir = workspace_path .. project_name
 
+-- Needed for debugging
+local bundles = {
+  vim.fn.glob(home .. '/.local/share/nvim/mason/share/java-debug-adapter/com.microsoft.java.debug.plugin.jar'),
+}
+-- Needed for running/debugging unit tests
+vim.list_extend(bundles, vim.split(vim.fn.glob(home .. '/.local/share/nvim/mason/share/java-test/*.jar', 1), '\n'))
+
 local status, jdtls = pcall(require, 'jdtls')
 if not status then
   return
@@ -17,7 +24,9 @@ local config = {
     '-Declipse.product=org.eclipse.jdt.ls.core.product',
     '-Dlog.protocol=true',
     '-Dlog.level=ALL',
-    '-Xmx1g',
+    '-Xms1G',
+    '-Xmx2G',
+    --'--jvm-arg=-javaagent:/path/to/java-debug/com.microsoft.java.debug.plugin.jar',
     '--add-modules=ALL-SYSTEM',
     '--add-opens',
     'java.base/java.util=ALL-UNNAMED',
@@ -25,24 +34,28 @@ local config = {
     'java.base/java.lang=ALL-UNNAMED',
     '-javaagent:' .. home .. '/.local/share/nvim/mason/packages/jdtls/lombok.jar',
     '-jar',
-    vim.fn.glob(home .. '/.local/share/nvim/mason/packages/jdtls/plugins/org.eclipse.equinox.launcher_*.jar'),
+    vim.env.HOME .. '/.local/share/nvim/mason/share/jdtls/plugins/org.eclipse.equinox.launcher.jar',
     '-configuration',
     home .. '/.local/share/nvim/mason/packages/jdtls/config_mac',
-    '-data',
+    '-data ',
     workspace_dir,
   },
   root_dir = require('jdtls.setup').find_root { '.git', 'mvnw', 'gradlew', 'pom.xml', 'build.gradle' },
 
   settings = {
     java = {
-      signatureHelp = { enabled = true },
-      extendedClientCapabilities = extendedClientCapabilities,
       runtimes = {
         {
           name = 'JavaSE-11',
-          path = '/Users/MiguelTavares/Library/Java/JavaVirtualMachines/corretto-11.0.17',
+          path = '/opt/homebrew/Cellar/openjdk@11',
+        },
+        {
+          name = 'JavaSE-17',
+          path = '/opt/homebrew/Cellar/openjdk@17',
         },
       },
+      signatureHelp = { enabled = true },
+      extendedClientCapabilities = extendedClientCapabilities,
       maven = {
         downloadSources = true,
       },
@@ -51,8 +64,93 @@ local config = {
       },
       references = {
         includeDecompiledSources = true,
+
+        parameterNames = {
+          enabled = 'all', -- literals, all, none
+        },
       },
-      inlayHints = {
+      format = {
+        enabled = false,
+      },
+    },
+  },
+
+  -- Needed for auto-completion with method signatures and placeholders
+  capabilities = require('cmp_nvim_lsp').default_capabilities(),
+  flags = {
+    allow_incremental_sync = true,
+  },
+  init_options = {
+    -- References the bundles defined above to support Debugging and Unit Testing
+    bundles = bundles,
+    extendedClientCapabilities = jdtls.extendedClientCapabilities,
+  },
+}
+
+-- Needed for debugging
+
+local mason_share_path = vim.fn.stdpath 'data' .. '/mason/share'
+
+-- Java Debug Adapter path
+local java_debug_path = vim.fn.glob(mason_share_path .. '/java-debug-adapter/com.microsoft.java.debug.plugin.jar', true)
+if java_debug_path ~= '' then
+  table.insert(bundles, java_debug_path)
+end
+
+local java_test_path = vim.fn.glob(mason_share_path .. '/java-test/com.microsoft.java.test.plugin.jar', true)
+if java_test_path ~= '' then
+  table.insert(bundles, java_test_path)
+end
+
+-- Start jdtls with proper initialization
+require('jdtls').start_or_attach {
+  cmd = {
+    '/Users/MiguelTavares/Library/Java/JavaVirtualMachines/openjdk-21.0.1/Contents/Home/bin/java', -- Ensure Java is in PATH or use full path
+    '-Declipse.application=org.eclipse.jdt.ls.core.id1',
+    '-Dosgi.bundles.defaultStartLevel=4',
+    '-Declipse.product=org.eclipse.jdt.ls.core.product',
+    '-Dlog.protocol=true',
+    '-Dlog.level=ALL',
+    '-Xms1G',
+    '-Xmx2G',
+    '--add-modules=ALL-SYSTEM',
+    '--add-opens=java.base/java.util=ALL-UNNAMED',
+    '--add-opens=java.base/java.lang=ALL-UNNAMED',
+    '--add-opens=java.base/java.lang.reflect=ALL-UNNAMED',
+    -- '-javaagent:'
+    --   .. home
+    --   .. '/.local/share/nvim/mason/packages/jdtls/lombok.jar', -- Uncomment if needed
+    '-jar',
+    vim.env.HOME .. '/.local/share/nvim/mason/share/jdtls/plugins/org.eclipse.equinox.launcher.jar',
+    '-configuration',
+    home .. '/.local/share/nvim/mason/packages/jdtls/config_mac_arm',
+    '-data',
+    workspace_dir, -- Removed trailing space
+  },
+
+  settings = {
+    java = {
+      runtimes = {
+        {
+          name = 'openjdk@11',
+          path = '/Users/MiguelTavares/.jabba/jdk/openjdk@1.11.0-1/Contents/Home/bin/java',
+        },
+        {
+          name = 'JavaSE-17',
+          path = '/opt/homebrew/Cellar/openjdk@17',
+        },
+      },
+      signatureHelp = { enabled = true },
+      extendedClientCapabilities = extendedClientCapabilities,
+      maven = {
+        downloadSources = true,
+      },
+      referencesCodeLens = {
+        enabled = true,
+      },
+      references = {
+        includeDecompiledSources = true,
+
         parameterNames = {
           enabled = 'all', -- literals, all, none
         },
@@ -64,14 +162,24 @@ local config = {
   },
 
   init_options = {
-    bundles = {},
+    bundles = bundles, -- Load Java Debug and Test extensions
   },
-}
-require('jdtls').start_or_attach(config)
+  on_attach = function(client, bufnr)
+    -- Ensure that jdtls is attached to the current buffer
+    if client.name == 'jdtls' then
+      print 'jdtls is attached'
 
-vim.keymap.set('n', '<leader>co', "<Cmd>lua require'jdtls'.organize_imports()<CR>", { desc = 'Organize Imports' })
-vim.keymap.set('n', '<leader>crv', "<Cmd>lua require('jdtls').extract_variable()<CR>", { desc = 'Extract Variable' })
-vim.keymap.set('v', '<leader>crv', "<Esc><Cmd>lua require('jdtls').extract_variable(true)<CR>", { desc = 'Extract Variable' })
-vim.keymap.set('n', '<leader>crc', "<Cmd>lua require('jdtls').extract_constant()<CR>", { desc = 'Extract Constant' })
-vim.keymap.set('v', '<leader>crc', "<Esc><Cmd>lua require('jdtls').extract_constant(true)<CR>", { desc = 'Extract Constant' })
-vim.keymap.set('v', '<leader>crm', "<Esc><Cmd>lua require('jdtls').extract_method(true)<CR>", { desc = 'Extract Method' })
+      -- Configure DAP if jdtls client is attached
+      require('jdtls').setup_dap {
+        hotcodereplace = 'auto',
+        config_overrides = {}, -- Required field
+      }
+      require('jdtls.dap').setup_dap_main_class_configs()
+    end
+  end,
+}
+
+-- For debugging, print active clients
+vim.cmd [[
+  autocmd BufReadPre *.java lua require('jdtls').get_active_clients()
+]]
