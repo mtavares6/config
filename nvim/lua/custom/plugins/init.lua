@@ -3,6 +3,7 @@
 --
 -- See the kickstart.nvim README for more information
 return {
+
   'tpope/vim-dadbod',
   'kristijanhusak/vim-dadbod-completion',
   'kristijanhusak/vim-dadbod-ui',

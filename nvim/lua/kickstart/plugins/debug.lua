@@ -85,16 +85,16 @@ return {
       -- Makes a best effort to setup the various debuggers with
       -- reasonable debug configurations
       automatic_installation = true,
-
       -- You can provide additional configuration to the handlers,
       -- see mason-nvim-dap README for more information
       handlers = {},
-
       -- You'll need to check that you have the required things installed
       -- online, please don't ask me how to install them :)
       ensure_installed = {
         -- Update this to ensure that you have the debuggers for the langs you want
         'delve',
+        'java-debug-adapter',
+        'java-test',
       },
     }
 
@@ -120,6 +120,48 @@ return {
       },
     }
 
+    dap.listeners.after.event_initialized['dapui_config'] = function()
+      require('dapui').open()
+    end
+
+    dap.listeners.before.event_terminated['dapui_config'] = function()
+      -- Commented to prevent DAP UI from closing when unit tests finish
+      -- require('dapui').close()
+    end
+
+    dap.listeners.before.event_exited['dapui_config'] = function()
+      -- Commented to prevent DAP UI from closing when unit tests finish
+      -- require('dapui').close()
+    end
+    dap.configurations.java = {
+      {
+        name = 'Debug Launch (2GB)',
+        type = 'java',
+        request = 'launch',
+        vmArgs = '-Xmx2g',
+      },
+      {
+        name = 'Debug Attach (8080)',
+        type = 'java',
+        request = 'attach',
+        hostName = '127.0.0.1',
+        port = 8080,
+      },
+      {
+        name = 'Debug Attach (5005)',
+        type = 'java',
+        request = 'attach',
+        hostName = '127.0.0.1',
+        port = 5005,
+      },
+      {
+        name = 'Run My Java Application',
+        type = 'java',
+        request = 'launch',
+        mainClass = 'com.example.Main', -- Replace with your real Main class
+        vmArgs = '-Xmx2g',
+      },
+    }
     -- Change breakpoint icons
     -- vim.api.nvim_set_hl(0, 'DapBreak', { fg = '#e51400' })
     -- vim.api.nvim_set_hl(0, 'DapStop', { fg = '#ffcc00' })
@@ -135,7 +177,6 @@ return {
     dap.listeners.after.event_initialized['dapui_config'] = dapui.open
     dap.listeners.before.event_terminated['dapui_config'] = dapui.close
     dap.listeners.before.event_exited['dapui_config'] = dapui.close
-
     -- Install golang specific config
     require('dap-go').setup {
       delve = {

@@ -176,10 +176,10 @@ vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagn
 vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 
 -- TIP: Disable arrow keys in normal mode
--- vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
--- vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
--- vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
--- vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
+vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
+vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
+vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
+vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
 
 -- Keybinds to make split navigation easier.
 --  Use CTRL+<hjkl> to switch between windows
@@ -401,12 +401,29 @@ require('lazy').setup({
         -- You can put your default mappings / updates / etc. in here
         --  All the info you're looking for is in `:help telescope.setup()`
         --
-        -- defaults = {
+        defaults = {
+          file_ignore_patterns = {},
+          vimgrep_arguments = {
+            'rg',
+            '--color=never',
+            '--no-heading',
+            '--with-filename',
+            '--line-number',
+            '--column',
+            '--smart-case',
+            '-u', -- thats the new thing
+          },
+        },
+        pickers = {
+          find_files = {
+            hidden = true, -- Include hidden files
+            follow = true, -- Follow symlinks
+          },
+        },
         --   mappings = {
         --     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
         --   },
         -- },
-        -- pickers = {}
         extensions = {
           ['git_grep'] = { require('telescope').load_extension 'git_grep' },
           ['ui-select'] = {
@@ -464,8 +481,14 @@ require('lazy').setup({
       end, { desc = '[S]earch [N]eovim files' })
     end,
   },
-
-  -- LSP Plugins
+  {
+    'mfussenegger/nvim-jdtls',
+    dependencies = {
+      { 'mfussenegger/nvim-dap' },
+    },
+    ft = 'java',
+  },
+  -- -- LSP Plugins
   {
     -- `lazydev` configures Lua LSP for your Neovim config, runtime and plugins
     -- used for completion, annotations and signatures of Neovim apis
@@ -480,10 +503,6 @@ require('lazy').setup({
   },
   { 'Bilal2453/luvit-meta', lazy = true },
   {
-    -- https://github.com/mfussenegger/nvim-jdtls
-    'mfussenegger/nvim-jdtls',
-  },
-  {
     -- Main LSP Configuration
     'neovim/nvim-lspconfig',
     dependencies = {
@@ -491,7 +510,6 @@ require('lazy').setup({
       { 'williamboman/mason.nvim', config = true }, -- NOTE: Must be loaded before dependants
       'williamboman/mason-lspconfig.nvim',
       'WhoIsSethDaniel/mason-tool-installer.nvim',
-
       -- Useful status updates for LSP.
       -- NOTE: `opts = {}` is the same as calling `require('fidget').setup({})`
       { 'j-hui/fidget.nvim', opts = {} },
@@ -686,15 +704,6 @@ require('lazy').setup({
       --
       --  You can press `g?` for help in this menu.
       require('mason').setup()
-      --require('mason-nvim-dap').setup()
-      --
-      -- vim.keymap.set('n', '<space>b', dap.toggle_breakpoint)
-      -- vim.keymap.set('n', '<F1>', dap.continue)
-      -- vim.keymap.set('n', '<F2>', dap.step_into)
-      -- vim.keymap.set('n', '<F3>', dap.step_over)
-      -- vim.keymap.set('n', '<F4>', dap.step_out)
-      -- vim.keymap.set('n', '<F5>', dap.step_back)
-      -- vim.keymap.set('n', '<F12>', dap.restart)
       -- -- You can add other tools here that you want Mason to install
       -- for you, so that they are available from within Neovim.
       local ensure_installed = vim.tbl_keys(servers or {})
@@ -705,45 +714,20 @@ require('lazy').setup({
         'java-test',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
-
       require('mason-lspconfig').setup {
-        opts = {
-          servers = {
-            jdtls = {},
-          },
-          setup = {
-            jdtls = function()
-              return true -- avoid duplicate servers
-            end,
-          },
-        },
+        ensure_installed = { 'jdtls' },
         handlers = {
           function(server_name)
-            local server = servers[server_name] or {}
-            -- This handles overriding only values explicitly passed
-            -- by the server configuration above. Useful when disabling
-            -- certain features of an LSP (for example, turning off formatting for ts_ls)
-            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-            require('lspconfig')[server_name].setup(server)
+            -- Don't call setup for JDTLS Java LSP because it will be setup from a separate config
+            if server_name ~= 'jdtls' then
+              local server = servers[server_name] or {}
+              -- This handles overriding only values explicitly passed
+              -- by the server configuration above. Useful when disabling
+              -- certain features of an LSP (for example, turning off formatting for tsserver)
+              server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
+              require('lspconfig')[server_name].setup(server)
+            end
           end,
-        },
-      }
-    end,
-  },
- {
-    'mfussenegger/nvim-dap',
-    config = function() end,
-    opts = function()
-      -- Simple configuration to attach to remote java debug process
-      -- Taken directly from https://github.com/mfussenegger/nvim-dap/wiki/Java
-      local dap = require 'dap'
-      dap.configurations.java = {
-        {
-          type = 'java',
-          request = 'attach',
-          name = 'Debug (Attach) - Remote',
-          hostName = '127.0.0.1',
-          port = 5005,
         },
       }
     end,
@@ -950,7 +934,9 @@ require('lazy').setup({
       -- - saiw) - [S]urround [A]dd [I]nner [W]ord [)]Paren
       -- - sd'   - [S]urround [D]elete [']quotes
       -- - sr)'  - [S]urround [R]eplace [)] [']
-      require('mini.surround').setup()
+      require('mini.surround').setup {
+        search_method = 'cover_or_next', -- This expands the search range
+      }
 
       -- Simple and easy statusline.
       --  You could remove this setup call if you don't like it,
@@ -1006,6 +992,7 @@ require('lazy').setup({
   --  Here are some example plugins that I've included in the Kickstart repository.
   --  Uncomment any of the lines below to enable them (you will need to restart nvim).
   --
+  --
   -- require 'kickstart.plugins.debug',
   -- require 'kickstart.plugins.indent_line',
   -- require 'kickstart.plugins.lint',
@@ -1043,90 +1030,8 @@ require('lazy').setup({
       lazy = '💤 ',
     },
   },
-},{
-    'mfussenegger/nvim-jdtls',
-    config = function() end,
-    opts = function()
-      local cmd = { vim.fn.exepath 'jdtls' }
-      -- Example of adding LazyVim with lazy.nvim
-     if LazyVim.has 'mason.nvim' then
-        local mason_registry = require 'mason-registry'
-        local lombok_jar = mason_registry.get_package('jdtls'):get_install_path() .. '/lombok.jar'
-        table.insert(cmd, string.format('--jvm-arg=-javaagent:%s', lombok_jar))
-      end
-      return {
-        -- How to find the root dir for a given filename. The default comes from
-        -- lspconfig which provides a function specifically for java projects.
-        root_dir = vim.lsp.get_raw_config('jdtls').default_config.root_dir,
-
-        -- How to find the project name for a given root dir.
-        project_name = function(root_dir)
-          return root_dir and vim.fs.basename(root_dir)
-        end,
-
-        -- Where are the config and workspace dirs for a project?
-        jdtls_config_dir = function(project_name)
-          return vim.fn.stdpath 'cache' .. '/jdtls/' .. project_name .. '/config'
-        end,
-        jdtls_workspace_dir = function(project_name)
-          return vim.fn.stdpath 'cache' .. '/jdtls/' .. project_name .. '/workspace'
-        end,
-
-        -- How to run jdtls. This can be overridden to a full java command-line
-        -- if the Python wrapper script doesn't suffice.
-        cmd = cmd,
-        full_cmd = function(opts)
-          local fname = vim.api.nvim_buf_get_name(0)
-          local root_dir = opts.root_dir(fname)
-          local project_name = opts.project_name(root_dir)
-          local cmd = vim.deepcopy(opts.cmd)
-          if project_name then
-            vim.list_extend(cmd, {
-              '-configuration',
-              opts.jdtls_config_dir(project_name),
-              '-data',
-              opts.jdtls_workspace_dir(project_name),
-            })
-          end
-          return cmd
-        end,
-
-        -- These depend on nvim-dap, but can additionally be disabled by setting false here.
-        dap = { hotcodereplace = 'auto', config_overrides = {} },
-        -- Can set this to false to disable main class scan, which is a performance killer for large project
-        dap_main = {},
-        test = true,
-        settings = {
-          java = {
-            inlayHints = {
-              parameterNames = {
-                enabled = 'all',
-              },
-            },
-          },
-        },
-      }
-    end,
-    vim.keymap.set('n', '<leader>co', "<Cmd>lua require'jdtls'.organize_imports()<CR>", { desc = 'Organize Imports' }),
-    vim.keymap.set('n', '<leader>crv', "<Cmd>lua require('jdtls').extract_variable()<CR>", { desc = 'Extract Variable' }),
-    vim.keymap.set('v', '<leader>crv', "<Esc><Cmd>lua require('jdtls').extract_variable(true)<CR>", { desc = 'Extract Variable' }),
-    vim.keymap.set('n', '<leader>crc', "<Cmd>lua require('jdtls').extract_constant()<CR>", { desc = 'Extract Constant' }),
-    vim.keymap.set('v', '<leader>crc', "<Esc><Cmd>lua require('jdtls').extract_constant(true)<CR>", { desc = 'Extract Constant' }),
-    vim.keymap.set('v', '<leader>crm', "<Esc><Cmd>lua require('jdtls').extract_method(true)<CR>", { desc = 'Extract Method' }),
-  }
-)
-local neogit = require 'neogit'
-
-vim.keymap.set('n', '<leader>go', neogit.open, { silent = true, noremap = true })
-
-vim.keymap.set('n', '<leader>gc', ':Neogit commit<CR>', { silent = true, noremap = true })
-
-vim.keymap.set('n', '<leader>gp', ':Neogit pull<CR>', { silent = true, noremap = true })
-
-vim.keymap.set('n', '<leader>gP', ':Neogit push<CR>', { silent = true, noremap = true })
-
-vim.keymap.set('n', '<leader>gb', ':Telescope git_branches<CR>', { silent = true, noremap = true })
-
-vim.keymap.set('n', '<leader>gB', ':G blame<CR>', { silent = true, noremap = true })
+})
+require 'custom.keymaps'
+require('jdtls').setup_dap { hotcodereplace = 'auto' }
 
 -- vim: ts=2 sts=2 sw=2 et
