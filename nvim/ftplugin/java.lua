@@ -16,79 +16,6 @@ if not status then
 end
 local extendedClientCapabilities = jdtls.extendedClientCapabilities
 
-local config = {
-  cmd = {
-    'java',
-    '-Declipse.application=org.eclipse.jdt.ls.core.id1',
-    '-Dosgi.bundles.defaultStartLevel=4',
-    '-Declipse.product=org.eclipse.jdt.ls.core.product',
-    '-Dlog.protocol=true',
-    '-Dlog.level=ALL',
-    '-Xms1G',
-    '-Xmx2G',
-    --'--jvm-arg=-javaagent:/path/to/java-debug/com.microsoft.java.debug.plugin.jar',
-    '--add-modules=ALL-SYSTEM',
-    '--add-opens',
-    'java.base/java.util=ALL-UNNAMED',
-    '--add-opens',
-    'java.base/java.lang=ALL-UNNAMED',
-    '-javaagent:' .. home .. '/.local/share/nvim/mason/packages/jdtls/lombok.jar',
-    '-jar',
-    vim.env.HOME .. '/.local/share/nvim/mason/share/jdtls/plugins/org.eclipse.equinox.launcher.jar',
-    '-configuration',
-    home .. '/.local/share/nvim/mason/packages/jdtls/config_mac',
-    '-data ',
-    workspace_dir,
-  },
-  root_dir = require('jdtls.setup').find_root { '.git', 'mvnw', 'gradlew', 'pom.xml', 'build.gradle' },
-
-  settings = {
-    java = {
-      runtimes = {
-        {
-          name = 'JavaSE-11',
-          path = '/opt/homebrew/Cellar/openjdk@11',
-        },
-        {
-          name = 'JavaSE-17',
-          path = '/opt/homebrew/Cellar/openjdk@17',
-        },
-      },
-      signatureHelp = { enabled = true },
-      extendedClientCapabilities = extendedClientCapabilities,
-      maven = {
-        downloadSources = true,
-      },
-      referencesCodeLens = {
-        enabled = true,
-      },
-      references = {
-        includeDecompiledSources = true,
-
-        parameterNames = {
-          enabled = 'all', -- literals, all, none
-        },
-      },
-      format = {
-        enabled = false,
-      },
-    },
-  },
-
-  -- Needed for auto-completion with method signatures and placeholders
-  capabilities = require('cmp_nvim_lsp').default_capabilities(),
-  flags = {
-    allow_incremental_sync = true,
-  },
-  init_options = {
-    -- References the bundles defined above to support Debugging and Unit Testing
-    bundles = bundles,
-    extendedClientCapabilities = jdtls.extendedClientCapabilities,
-  },
-}
-
--- Needed for debugging
-
 local mason_share_path = vim.fn.stdpath 'data' .. '/mason/share'
 
 -- Java Debug Adapter path
@@ -132,8 +59,8 @@ require('jdtls').start_or_attach {
     java = {
       runtimes = {
         {
-          name = 'openjdk@11',
-          path = '/Users/MiguelTavares/.jabba/jdk/openjdk@1.11.0-1/Contents/Home/bin/java',
+          name = '11.0.25-amzn',
+          path = '/Users/MiguelTavares/.sdkman/candidates/java/11.0.25-amzn',
         },
         {
           name = 'JavaSE-17',
@@ -180,6 +107,6 @@ require('jdtls').start_or_attach {
 }
 
 -- For debugging, print active clients
-vim.cmd [[
-  autocmd BufReadPre *.java lua require('jdtls').get_active_clients()
-]]
+-- vim.cmd [[
+--   autocmd BufRead *.java lua require('jdtls').get_active_clients()
+-- ]]

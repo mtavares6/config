@@ -1,3 +1,4 @@
+
 ## Set PATH, MANPATH, etc., for Homebrew.
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
@@ -52,6 +53,10 @@ export PATH="$HOME/.jbang/bin:$PATH"
 [[ -r "/etc/profile.d/bash_completion.sh" ]] && . "/etc/profile.d/bash_completion.sh"
 
 
-[ -s "/Users/MiguelTavares/.jabba/jabba.sh" ] && source "/Users/MiguelTavares/.jabba/jabba.sh"
-export JABBA_VERSION=0.11.2
-[ -s "$JABBA_HOME/jabba.sh" ] && source "$JABBA_HOME/jabba.sh"
+#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
+export SDKMAN_DIR="$HOME/.sdkman"
+[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
+
+tmux source-file ~/.config/tmux/tmux.conf
+
+alias lzd='lazydocker'

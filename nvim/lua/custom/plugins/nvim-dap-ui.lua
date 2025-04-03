@@ -115,6 +115,22 @@ return {
       -- require('dapui').close()
     end
 
+    require('nvim-dap-virtual-text').setup {
+      -- This just tries to mitigate the chance that I leak tokens here. Probably won't stop it from happening...
+      display_callback = function(variable)
+        local name = string.lower(variable.name)
+        local value = string.lower(variable.value)
+        if name:match 'secret' or name:match 'api' or value:match 'secret' or value:match 'api' then
+          return '*****'
+        end
+
+        if #variable.value > 15 then
+          return ' ' .. string.sub(variable.value, 1, 15) .. '... '
+        end
+
+        return ' ' .. variable.value
+      end,
+    }
     -- Add dap configurations based on your language/adapter settings
     -- https://github.com/mfussenegger/nvim-dap/wiki/Debug-Adapter-installation
     dap.configurations.java = {
@@ -125,11 +141,11 @@ return {
         vmArgs = '' .. '-Xmx2g ',
       },
       {
-        name = 'Debug Attach (8080)',
+        name = 'Debug Attach (8000)',
         type = 'java',
         request = 'attach',
         hostName = '127.0.0.1',
-        port = 8080,
+        port = 8000,
       },
       {
         name = 'Debug Attach (5005)',
