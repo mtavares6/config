@@ -1,3 +1,6 @@
+vim.keymap.set('n', '<C-j>', '10j', { noremap = true, silent = true })
+vim.keymap.set('n', '<C-k>', '10k', { noremap = true, silent = true })
+
 -- Neogit
 local neogit = require 'neogit'
 
@@ -60,6 +63,9 @@ vim.keymap.set('n', '<leader>jm', function()
   end
 end)
 -- Debugging
+vim.keymap.set('n', '<leader>du', function()
+  require('dapui').toggle()
+end)
 vim.keymap.set('n', '<leader>bb', "<cmd>lua require'dap'.toggle_breakpoint()<cr>")
 vim.keymap.set('n', '<leader>bc', "<cmd>lua require'dap'.set_breakpoint(vim.fn.input('Breakpoint condition: '))<cr>")
 vim.keymap.set('n', '<leader>bl', "<cmd>lua require'dap'.set_breakpoint(nil, nil, vim.fn.input('Log point message: '))<cr>")
@@ -95,3 +101,52 @@ vim.keymap.set('n', '<leader>dh', '<cmd>Telescope dap commands<cr>')
 vim.keymap.set('n', '<leader>de', function()
   require('telescope.builtin').diagnostics { default_text = ':E:' }
 end)
+
+-- Harpoon
+local harpoon = require 'harpoon'
+
+-- REQUIRED
+harpoon:setup()
+-- REQUIRED
+
+vim.keymap.set('n', '<leader>a', function()
+  harpoon:list():add()
+end)
+
+vim.keymap.set('n', '<leader>hc', function()
+  harpoon:list():clear()
+end, { desc = 'Clear all Harpoon marks' })
+vim.keymap.set('n', '<leader>h', function()
+  harpoon.ui:toggle_quick_menu(harpoon:list())
+end)
+
+vim.keymap.set('n', '<C-y>', function()
+  harpoon:list():select(1)
+end)
+
+vim.keymap.set('n', '<C-u>', function()
+  harpoon:list():select(2)
+end)
+vim.keymap.set('n', '<C-i>', function()
+  harpoon:list():select(3)
+end)
+vim.keymap.set('n', '<C-o>', function()
+  harpoon:list():select(4)
+end)
+
+-- Toggle previous & next buffers stored within Harpoon list
+vim.keymap.set('n', '<C-p>', function()
+  harpoon:list():prev()
+end)
+vim.keymap.set('n', '<C-n>', function()
+  harpoon:list():next()
+end)
+
+-- Telescope
+vim.keymap.set('n', '<leader>ff', function()
+  require('telescope.builtin').find_files {
+    hidden = true,
+    no_ignore = true,
+    follow = true,
+  }
+end, { desc = '[F]ind [F]iles (include .ignore)' })
