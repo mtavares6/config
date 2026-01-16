@@ -3,36 +3,39 @@ local workspace_path = home .. '/.local/share/nvim/jdtls-workspace/'
 local project_name = vim.fn.fnamemodify(vim.fn.getcwd(), ':p:h:t')
 local workspace_dir = workspace_path .. project_name
 
--- Needed for debugging
+-- Bundle configuration for debugging and testing
 local bundles = {
   vim.fn.glob(home .. '/.local/share/nvim/mason/share/java-debug-adapter/com.microsoft.java.debug.plugin.jar'),
 }
--- Needed for running/debugging unit tests
 vim.list_extend(bundles, vim.split(vim.fn.glob(home .. '/.local/share/nvim/mason/share/java-test/*.jar', 1), '\n'))
 
+-- Load jdtls with error handling
 local status, jdtls = pcall(require, 'jdtls')
 if not status then
   return
 end
-local extendedClientCapabilities = jdtls.extendedClientCapabilities
 
-local mason_share_path = vim.fn.stdpath 'data' .. '/mason/share'
+-- Load project-specific configuration
+local project_config = {}
+local root_markers = { '.git', 'pom.xml', 'build.gradle', 'settings.gradle' } -- Added settings.gradle
+local root_dir = require('jdtls.setup').find_root(root_markers)
 
--- Java Debug Adapter path
-local java_debug_path = vim.fn.glob(mason_share_path .. '/java-debug-adapter/com.microsoft.java.debug.plugin.jar', true)
-if java_debug_path ~= '' then
-  table.insert(bundles, java_debug_path)
-end
-
-local java_test_path = vim.fn.glob(mason_share_path .. '/java-test/com.microsoft.java.test.plugin.jar', true)
-if java_test_path ~= '' then
-  table.insert(bundles, java_test_path)
+if root_dir then
+  local project_config_path = root_dir .. '/.jdtls.lua'
+  if vim.fn.filereadable(project_config_path) == 1 then
+    local ok, config = pcall(dofile, project_config_path)
+    if ok then
+      project_config = config
+    else
+      vim.notify('Error loading .jdtls.lua: ' .. config, vim.log.levels.ERROR)
+    end
+  end
 end
 
 -- Start jdtls with proper initialization
 require('jdtls').start_or_attach {
   cmd = {
-    '/Users/MiguelTavares/Library/Java/JavaVirtualMachines/openjdk-21.0.1/Contents/Home/bin/java', -- Ensure Java is in PATH or use full path
+    '/Users/MiguelTavares/Library/Java/JavaVirtualMachines/openjdk-21.0.1/Contents/Home/bin/java', -- Use system Java (must be JDK 17+)
     '-Declipse.application=org.eclipse.jdt.ls.core.id1',
     '-Dosgi.bundles.defaultStartLevel=4',
     '-Declipse.product=org.eclipse.jdt.ls.core.product',
@@ -44,69 +47,72 @@ require('jdtls').start_or_attach {
     '--add-opens=java.base/java.util=ALL-UNNAMED',
     '--add-opens=java.base/java.lang=ALL-UNNAMED',
     '--add-opens=java.base/java.lang.reflect=ALL-UNNAMED',
-    -- '-javaagent:'
-    --   .. home
-    --   .. '/.local/share/nvim/mason/packages/jdtls/lombok.jar', -- Uncomment if needed
     '-jar',
-    vim.env.HOME .. '/.local/share/nvim/mason/share/jdtls/plugins/org.eclipse.equinox.launcher.jar',
+    home .. '/.local/share/nvim/mason/share/jdtls/plugins/org.eclipse.equinox.launcher.jar',
     '-configuration',
     home .. '/.local/share/nvim/mason/packages/jdtls/config_mac_arm',
     '-data',
-    workspace_dir, -- Removed trailing space
+    workspace_dir,
   },
 
   settings = {
-    java = {
-      runtimes = {
-        {
-          name = '11.0.25-amzn',
-          path = '/Users/MiguelTavares/.sdkman/candidates/java/11.0.25-amzn',
-        },
-        {
-          name = 'JavaSE-17',
-          path = '/opt/homebrew/Cellar/openjdk@17',
+    java = vim.tbl_deep_extend('force', {
+      configuration = {
+        updateBuildConfiguration = 'automatic',
+        runtimes = {
+          {
+            name = '21.0.6-amzn',
+            path = '/Users/MiguelTavares/.sdkman/candidates/21.0.6-amzn',
+          },
+          {
+            name = '11.0.25-amzn',
+            path = '/Users/MiguelTavares/.sdkman/candidates/java/11.0.25-amzn',
+          },
+          {
+            name = 'JavaSE-17',
+            path = '/opt/homebrew/Cellar/openjdk@17',
+          },
         },
       },
       signatureHelp = { enabled = true },
-      extendedClientCapabilities = extendedClientCapabilities,
-      maven = {
-        downloadSources = true,
-      },
-      referencesCodeLens = {
-        enabled = true,
-      },
+      maven = { downloadSources = true },
+      referencesCodeLens = { enabled = true },
       references = {
         includeDecompiledSources = true,
-
-        parameterNames = {
-          enabled = 'all', -- literals, all, none
-        },
+        parameterNames = { enabled = 'all' },
       },
       format = {
-        enabled = false,
+        enabled = true,
+        settings = {
+          url = vim.fn.expand '~/.config/nvim/ftplugin/carrot-style.xml',
+          profile = 'carrot',
+        },
       },
-    },
+    }, project_config.java or {}),
   },
 
-  init_options = {
-    bundles = bundles, -- Load Java Debug and Test extensions
-  },
+  init_options = { bundles = bundles },
+
   on_attach = function(client, bufnr)
-    -- Ensure that jdtls is attached to the current buffer
     if client.name == 'jdtls' then
-      print 'jdtls is attached'
+      -- Set project-specific runtime if configured
+      if project_config.java and project_config.java.configuration and project_config.java.configuration.runtimes then
+        for _, runtime in ipairs(project_config.java.configuration.runtimes) do
+          if runtime.default then
+            pcall(require('jdtls').set_runtime, runtime.name)
+            break
+          end
+        end
+      end
 
-      -- Configure DAP if jdtls client is attached
-      require('jdtls').setup_dap {
-        hotcodereplace = 'auto',
-        config_overrides = {}, -- Required field
-      }
+      -- Configure DAP
+      require('jdtls').setup_dap { hotcodereplace = 'auto' }
       require('jdtls.dap').setup_dap_main_class_configs()
     end
   end,
 }
 
--- For debugging, print active clients
--- vim.cmd [[
---   autocmd BufRead *.java lua require('jdtls').get_active_clients()
--- ]]
+-- Add command to set runtime manually
+vim.api.nvim_buf_create_user_command(0, 'JdtSetRuntime', function(opts)
+  require('jdtls').set_runtime(opts.args)
+end, { nargs = 1, complete = require('jdtls')._complete_set_runtime })

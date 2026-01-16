@@ -154,6 +154,8 @@ return {
         hostName = '127.0.0.1',
         port = 5005,
       },
+      { name = 'Debug Attach (5004)', type = 'java', request = 'attach', hostName = '127.0.0.1', port = 5004 },
+      { name = 'Debug Attach (5003)', type = 'java', request = 'attach', hostName = '127.0.0.1', port = 5003 },
       {
         name = 'Run My Java Application',
         type = 'java',

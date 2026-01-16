@@ -206,6 +206,7 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
+local copilot = require 'custom.plugins.copilot'
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
   local lazyrepo = 'https://github.com/folke/lazy.nvim.git'
@@ -411,7 +412,7 @@ require('lazy').setup({
             '--line-number',
             '--column',
             '--smart-case',
-            '-u', -- thats the new thing
+            '-uuu', -- thats the new thing
           },
         },
         pickers = {
@@ -709,18 +710,22 @@ require('lazy').setup({
       --  other tools, you can run
       --    :Mason
       --
-      --  You can press `g?` for help in this menu.
+      -- Workaround for Mason mapping issues
+      pcall(function()
+        package.loaded['mason-lspconfig.mappings.server'] = nil
+        require 'mason-lspconfig.mappings.server'
+      end)
       require('mason').setup()
-      -- -- You can add other tools here that you want Mason to install
-      -- for you, so that they are available from within Neovim.
+
+      -- Collect LSP servers to ensure are installed
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
-        -- Used to format Lua code
-        'stylua',
-        'java-debug-adapter',
-        'java-test',
+        'stylua', -- Lua formatter
+        'java-debug-adapter', -- Java debug
+        'java-test', -- Java test
       })
-      require('mason-tool-installer').setup { ensure_installed = ensure_installed }
+
+      -- Setup mason-lspconfig first
       require('mason-lspconfig').setup {
         ensure_installed = { 'jdtls' },
         handlers = {
@@ -736,6 +741,14 @@ require('lazy').setup({
             end
           end,
         },
+      }
+
+      -- Explicitly require the mappings to avoid nil errors (critical fix)
+      pcall(require, 'mason-lspconfig.mappings.server')
+
+      -- Now setup mason-tool-installer
+      require('mason-tool-installer').setup {
+        ensure_installed = ensure_installed,
       }
     end,
   },
@@ -773,6 +786,7 @@ require('lazy').setup({
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
+        xml = { 'xmllint' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
@@ -823,7 +837,13 @@ require('lazy').setup({
       local cmp = require 'cmp'
       local luasnip = require 'luasnip'
       luasnip.config.setup {}
-
+      local has_words_before = function()
+        if vim.api.nvim_buf_get_option(0, 'buftype') == 'prompt' then
+          return false
+        end
+        local line, col = unpack(vim.api.nvim_win_get_cursor(0))
+        return col ~= 0 and vim.api.nvim_buf_get_text(0, line - 1, 0, line - 1, col, {})[1]:match '^%s*$' == nil
+      end
       cmp.setup {
         snippet = {
           expand = function(args)
@@ -836,6 +856,13 @@ require('lazy').setup({
         -- chosen, you will need to read `:help ins-completion`
         --
         -- No, but seriously. Please read `:help ins-completion`, it is really good!
+        ['<Tab>'] = vim.schedule_wrap(function(fallback)
+          if cmp.visible() and has_words_before() then
+            cmp.select_next_item { behavior = cmp.SelectBehavior.Select }
+          else
+            fallback()
+          end
+        end),
         mapping = cmp.mapping.preset.insert {
           -- Select the [n]ext item
           ['<C-j>'] = cmp.mapping.select_next_item(),
@@ -885,6 +912,8 @@ require('lazy').setup({
           --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
         },
         sources = {
+          -- Copilot Source
+          { name = 'copilot', group_index = 2 },
           {
             name = 'lazydev',
             -- set group index to 0 to skip loading LuaLS completions as lazydev recommends it
@@ -983,7 +1012,6 @@ require('lazy').setup({
         'query',
         'vim',
         'vimdoc',
-        'java',
         'typescript',
         'javascript',
       },
@@ -1057,7 +1085,7 @@ require('lazy').setup({
 })
 require 'custom.keymaps'
 require('jdtls').setup_dap { hotcodereplace = 'auto' }
-
+require('copilot').setup(copilot.opts)
 local harpoon = require 'harpoon'
 harpoon:setup {}
 
