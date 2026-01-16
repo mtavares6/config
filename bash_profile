@@ -60,5 +60,3 @@ export SDKMAN_DIR="$HOME/.sdkman"
 tmux source-file ~/.config/tmux/tmux.conf
 
 alias lzd='lazydocker'
-[[ -r "/opt/homebrew/etc/profile.d/bash_completion.sh" ]] && . "/opt/homebrew/etc/profile.d/bash_completion.sh"
-[[ -r "/opt/homebrew/etc/profile.d/bash_completion.sh" ]] && . "/opt/homebrew/etc/profile.d/bash_completion.sh"
