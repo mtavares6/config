@@ -206,7 +206,6 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
-local copilot = require 'custom.plugins.copilot'
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
   local lazyrepo = 'https://github.com/folke/lazy.nvim.git'
@@ -403,7 +402,7 @@ require('lazy').setup({
         --  All the info you're looking for is in `:help telescope.setup()`
         --
         defaults = {
-          file_ignore_patterns = {},
+          file_ignore_patterns = { 'node_modules', '.git/' },
           vimgrep_arguments = {
             'rg',
             '--color=never',
@@ -912,8 +911,6 @@ require('lazy').setup({
           --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
         },
         sources = {
-          -- Copilot Source
-          { name = 'copilot', group_index = 2 },
           {
             name = 'lazydev',
             -- set group index to 0 to skip loading LuaLS completions as lazydev recommends it
@@ -933,24 +930,92 @@ require('lazy').setup({
       })
     end,
   },
-  { -- You can easily change to a different colorscheme.
-    -- Change the name of the colorscheme plugin below, and then
-    -- change the command in the config to whatever the name of that colorscheme is.
-    --
-    -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-    'folke/tokyonight.nvim',
-    priority = 1000, -- Make sure to load this before all the other start plugins.
-    init = function()
-      -- Load the colorscheme here.
-      -- Like many other themes, this one has different styles, and you could load
-      -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'tokyonight-night'
+  -- { -- You can easily change to a different colorscheme.
+  --   -- Change the name of the colorscheme plugin below, and then
+  --   -- change the command in the config to whatever the name of that colorscheme is.
+  --   --
+  --   -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
+  --   'folke/tokyonight.nvim',
+  --   priority = 1000, -- Make sure to load this before all the other start plugins.
+  --   init = function()
+  --     -- Load the colorscheme here.
+  --     -- Like many other themes, this one has different styles, and you could load
+  --     -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
+  --     vim.cmd.colorscheme 'tokyonight-night'
+  --
+  --     -- You can configure highlights by doing something like:
+  --     vim.cmd.hi 'Comment gui=none'
+  --   end,
+  -- },
+  -- {
+  --   'catppuccin/nvim',
+  --   name = 'catppuccin',
+  --   priority = 1000,
+  --   init = function()
+  --     vim.cmd.colorscheme 'catppuccin'
+  --   end,
+  -- },
+  {
+    'metalelf0/black-metal-theme-neovim',
+    lazy = false,
+    priority = 1000,
+    config = function()
+      require('black-metal').setup {
+        -- Can be one of: bathory | burzum | dark-funeral | darkthrone | emperor | gorgoroth | immortal | impaled-nazarene | khold | marduk | mayhem | nile | taake | thyrfing | venom | windir
+        theme = 'bathory',
+        -- Can be one of: 'light' | 'dark', or set via vim.o.background
+        variant = 'dark',
+        -- Use an alternate, lighter bg
+        alt_bg = false,
+        -- If true, docstrings will be highlighted like strings, otherwise they will be
+        -- highlighted like comments. Note, behavior is dependent on the language server.
+        colored_docstrings = true,
+        -- If true, highlights the {sign,fold} column the same as cursorline
+        cursorline_gutter = true,
+        -- If true, highlights the gutter darker than the bg
+        dark_gutter = false,
+        -- if true favor treesitter highlights over semantic highlights
+        favor_treesitter_hl = true,
+        -- Don't set background of floating windows. Recommended for when using floating
+        -- windows with borders.
+        plain_float = true,
+        -- Show the end-of-buffer character
+        show_eob = true,
+        -- If true, enable the vim terminal colors
+        term_colors = true,
+        -- Keymap (in normal mode) to toggle between light and dark variants.
+        toggle_variant_key = nil,
+        -- Don't set background
+        transparent = false, -- optional configuration here
+        -----PLUGINS-----
+        plugin = {
+          lualine = {
+            bold = true,
+            plain = false,
+          },
+          cmp = {
+            plain = true, -- Keep colorful LSP kind indicators
+            reverse = true, -- Try this for better selection contrast
+          },
+        },
+        highlights = {
+          TelescopeSelection = { fg = '#FFFFFF', bg = '#333333', bold = true },
+          TelescopeSelectionCaret = { fg = '#FF0000', bold = true },
+          TelescopeMatching = { fg = '#FFFF00', bold = true },
 
-      -- You can configure highlights by doing something like:
-      vim.cmd.hi 'Comment gui=none'
+          -- Extra cmp refinement (optional, if plugin settings aren't enough)
+          CmpItemAbbrMatch = { fg = '#FFCC00', bold = true },
+          -- Make completion popup stand out with different background
+          Pmenu = { fg = '#CCCCCC', bg = '#1a1a1a' }, -- Darker than editor bg
+          PmenuSel = { fg = '#FFFFFF', bg = '#2a2a2a', bold = true }, -- Selected item
+          PmenuBorder = { fg = '#444444', bg = '#1a1a1a' }, -- Border (if enabled)
+          -- Matched text in completion
+          PmenuSel = { fg = '#FFFFFF', bg = '#333333', bold = true },
+        },
+      }
+      require('black-metal').load()
     end,
   },
-
   -- Highlight todo, notes, etc in comments
   { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
 
@@ -1085,7 +1150,6 @@ require('lazy').setup({
 })
 require 'custom.keymaps'
 require('jdtls').setup_dap { hotcodereplace = 'auto' }
-require('copilot').setup(copilot.opts)
 local harpoon = require 'harpoon'
 harpoon:setup {}
 
