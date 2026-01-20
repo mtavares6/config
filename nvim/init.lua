@@ -1151,9 +1151,10 @@ require('lazy').setup({
 require 'custom.keymaps'
 require('jdtls').setup_dap { hotcodereplace = 'auto' }
 local harpoon = require 'harpoon'
+require 'opencode'
 harpoon:setup {}
 
--- basic telescope configuration
+--basic telescope configuration
 local conf = require('telescope.config').values
 local function toggle_telescope(harpoon_files)
   local file_paths = {}
