@@ -40,7 +40,13 @@ esac
 # opencode
 export PATH=/Users/MiguelTavares/.opencode/bin:$PATH
 alias oc='opencode'
-export EDITOR=vim
+export EDITOR=nvim
 
 # sessionizer
 export PATH=/Users/MiguelTavares/.config/sessionizer:$PATH
+
+# Maven Debug Auto-Sourcing
+# Auto-source .mavenrc in project directories for debug configuration
+export PATH="$HOME/.local/bin:$PATH"
+alias debug-ports='debug-port-manager list'
+alias debug-check='debug-port-manager check'
